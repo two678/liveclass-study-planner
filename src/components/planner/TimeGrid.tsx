@@ -2,7 +2,7 @@
 import { HOURS, DAYS } from '@/constants/planner';
 import { usePlannerStore } from '@/store/usePlannerStore';
 import React from 'react';
-import StudyBlockItem from './StuckBlockItem';
+import StudyBlockItem from './StudyBlockItem';
 
 export default function TimeGrid() {
   const { blocks } = usePlannerStore();
