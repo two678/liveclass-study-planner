@@ -47,7 +47,8 @@ export interface SavePlannerRequest {
 export type ErrorCode =
   | 'TIME_CONFLICT'
   | 'INVALID_TIME_RANGE'
-  | 'INVALID_BLOCK';
+  | 'INVALID_BLOCK'
+  | 'SERVER_ERROR';
 
 export interface ErrorResponse {
   code: ErrorCode;

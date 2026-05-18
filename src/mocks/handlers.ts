@@ -1,5 +1,11 @@
-import { http, HttpResponse } from 'msw';
-import type { SavePlannerRequest, ErrorResponse } from '@/types/planner';
+import { http, HttpResponse, type PathParams } from 'msw';
+import type {
+  SavePlannerRequest,
+  ErrorResponse,
+  PlannerResponse,
+  CourseListResponse,
+} from '@/types/planner';
+import { DAYS } from '@/constants/planner';
 
 /**
  * MSW 요청 핸들러 정의
@@ -21,14 +27,14 @@ export const handlers = [
 
   // 강좌 목록 조회
   http.get('api/courses', () => {
-    return HttpResponse.json({
+    return HttpResponse.json<CourseListResponse>({
       courses: mockCourses,
     });
   }),
 
   // 플래너(시간표) 조회
   http.get('/api/plans', () => {
-    return HttpResponse.json({
+    return HttpResponse.json<PlannerResponse>({
       weekStart: '2026-05-18', // 월요일
       blocks: [
         {
@@ -83,99 +89,99 @@ export const handlers = [
     });
   }),
   // 플래너(시간표) 저장 (PUT 요청)
-  http.put('/api/planner', async ({ request }) => {
-    try {
-      const { weekStart, blocks } =
-        (await request.json()) as SavePlannerRequest;
+  http.put<PathParams, SavePlannerRequest, PlannerResponse | ErrorResponse>(
+    '/api/planner',
+    async ({ request }) => {
+      try {
+        const { weekStart, blocks } = await request.json();
 
-      // 1. 최상단 데이터 구조 검증
-      if (!weekStart || !Array.isArray(blocks)) {
-        return HttpResponse.json(
-          {
-            code: 'INVALID_BLOCK',
-            message: 'weekStart 또는 blocks 데이터가 올바르지 않습니다.',
-          },
-          { status: 400 }
-        );
-      }
-
-      // 블록들을 순회하며 유효성 검사
-      for (let i = 0; i < blocks.length; i++) {
-        const block = blocks[i];
-
-        // 2. 블록 내부 필수 필드 검사
-        if (
-          block.dayOfWeek === undefined ||
-          !block.startTime ||
-          !block.endTime ||
-          !block.courseId
-        ) {
-          return HttpResponse.json(
+        // 1. 최상단 데이터 구조 검증
+        if (!weekStart || !Array.isArray(blocks)) {
+          return HttpResponse.json<ErrorResponse>(
             {
               code: 'INVALID_BLOCK',
-              message:
-                '블록의 필수 정보(courseId, dayOfWeek, startTime, endTime)가 누락되었습니다.',
+              message: 'weekStart 또는 blocks 데이터가 올바르지 않습니다.',
             },
             { status: 400 }
           );
         }
 
-        // 3. 시간 범위 검사 (시작 시간이 종료 시간보다 크거나 같은 경우)
-        if (block.startTime >= block.endTime) {
-          return HttpResponse.json(
-            {
-              code: 'INVALID_TIME_RANGE',
-              message: '종료 시간은 시작 시간보다 늦어야 합니다.',
-            },
-            { status: 400 }
-          );
-        }
+        // 블록들을 순회하며 유효성 검사
+        for (let i = 0; i < blocks.length; i++) {
+          const block = blocks[i];
 
-        // 4. 시간 충돌 검사 (다른 블록과 요일이 같으면서 시간이 겹치는지)
-        for (let j = i + 1; j < blocks.length; j++) {
-          const other = blocks[j];
-          if (block.dayOfWeek === other.dayOfWeek) {
-            if (
-              block.startTime < other.endTime &&
-              block.endTime > other.startTime
-            ) {
-              const dayStr =
-                ['월', '화', '수', '목', '금', '토', '일'][other.dayOfWeek] +
-                '요일';
-              const courseTitle =
-                mockCourses.find((c) => c.id === other.courseId)?.title ||
-                '알 수 없는 강의';
-              const message = `[${dayStr} ${other.startTime}~${other.endTime} ${courseTitle}] 일정과 시간이 겹칩니다. 확인 후 다시 시도해주세요.`;
+          // 2. 블록 내부 필수 필드 검사
+          if (
+            block.dayOfWeek === undefined ||
+            !block.startTime ||
+            !block.endTime ||
+            !block.courseId
+          ) {
+            return HttpResponse.json<ErrorResponse>(
+              {
+                code: 'INVALID_BLOCK',
+                message:
+                  '블록의 필수 정보(courseId, dayOfWeek, startTime, endTime)가 누락되었습니다.',
+              },
+              { status: 400 }
+            );
+          }
 
-              return HttpResponse.json(
-                { code: 'TIME_CONFLICT', message },
-                { status: 409 }
-              );
+          // 3. 시간 범위 검사 (시작 시간이 종료 시간보다 크거나 같은 경우)
+          if (block.startTime >= block.endTime) {
+            return HttpResponse.json<ErrorResponse>(
+              {
+                code: 'INVALID_TIME_RANGE',
+                message: '종료 시간은 시작 시간보다 늦어야 합니다.',
+              },
+              { status: 400 }
+            );
+          }
+
+          // 4. 시간 충돌 검사 (다른 블록과 요일이 같으면서 시간이 겹치는지)
+          for (let j = i + 1; j < blocks.length; j++) {
+            const other = blocks[j];
+            if (block.dayOfWeek === other.dayOfWeek) {
+              if (
+                block.startTime < other.endTime &&
+                block.endTime > other.startTime
+              ) {
+                const dayStr = DAYS[other.dayOfWeek] + '요일';
+                const courseTitle =
+                  mockCourses.find((c) => c.id === other.courseId)?.title ||
+                  '알 수 없는 강의';
+                const message = `[${dayStr} ${other.startTime}~${other.endTime} ${courseTitle}] 일정과 시간이 겹칩니다. 확인 후 다시 시도해주세요.`;
+
+                return HttpResponse.json<ErrorResponse>(
+                  { code: 'TIME_CONFLICT', message },
+                  { status: 409 }
+                );
+              }
             }
           }
         }
+
+        // 5. 성공 처리 (신규 블록인 경우 임의의 id 부여)
+        const savedBlocks = blocks.map((block, index) => ({
+          ...block,
+          id: block.id || `saved-plan-${Date.now()}-${index}`,
+        }));
+
+        // 최종 성공 응답 반환
+        return HttpResponse.json<PlannerResponse>({
+          weekStart,
+          blocks: savedBlocks,
+        });
+      } catch (error) {
+        console.error('Error saving planner:', error);
+        return HttpResponse.json<ErrorResponse>(
+          {
+            code: 'SERVER_ERROR',
+            message: '요청을 처리하는 중 오류가 발생했습니다.',
+          },
+          { status: 500 }
+        );
       }
-
-      // 5. 성공 처리 (신규 블록인 경우 임의의 id 부여)
-      const savedBlocks = blocks.map((block, index) => ({
-        ...block,
-        id: block.id || `saved-plan-${Date.now()}-${index}`,
-      }));
-
-      // 최종 성공 응답 반환
-      return HttpResponse.json({
-        weekStart,
-        blocks: savedBlocks,
-      });
-    } catch (error) {
-      console.error('Error saving planner:', error);
-      return HttpResponse.json(
-        {
-          code: 'SERVER_ERROR',
-          message: '요청을 처리하는 중 오류가 발생했습니다.',
-        },
-        { status: 500 }
-      );
     }
-  }),
+  ),
 ];

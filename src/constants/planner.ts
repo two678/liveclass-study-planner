@@ -15,4 +15,5 @@ export const PLANNER_ERROR_MESSAGES: Record<ErrorCode, string> = {
   TIME_CONFLICT: '다른 일정과 시간이 겹칩니다. 확인 후 다시 시도해주세요.',
   INVALID_TIME_RANGE: '시작 시간이 종료 시간보다 늦거나 같을 수 없습니다.',
   INVALID_BLOCK: '블록 데이터에 누락되거나 잘못된 정보가 있습니다.',
+  SERVER_ERROR: '요청을 처리하는 중 서버 오류가 발생했습니다.',
 };
