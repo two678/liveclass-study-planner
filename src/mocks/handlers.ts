@@ -26,14 +26,14 @@ export const handlers = [
   // }),
 
   // 강좌 목록 조회
-  http.get('api/courses', () => {
+  http.get('/api/courses', () => {
     return HttpResponse.json<CourseListResponse>({
       courses: mockCourses,
     });
   }),
 
   // 플래너(시간표) 조회
-  http.get('/api/plans', () => {
+  http.get('/api/planner', () => {
     return HttpResponse.json<PlannerResponse>({
       weekStart: '2026-05-18', // 월요일
       blocks: [
