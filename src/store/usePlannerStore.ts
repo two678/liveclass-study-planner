@@ -1,16 +1,22 @@
 import { StudyBlock } from '@/types/planner';
 import { isTimeConflict } from '@/utils/isTimeConflict';
+import { startOfWeek } from '@/utils/dateHelpers';
 import { create } from 'zustand';
 
 /**
- * 학습 플래너 상태 관리 스토어
- * - addBlock: 블록 추가
- * - deleteBlock: 블록 삭제
- * - updateBlock: 블록 수정
+ * 학습 플래너 상태 타입
+ * @property weekStart: 해당 주의 시작 날짜
+ * @property setWeekStart: 해당 주의 시작 날짜를 설정하는 함수
+ * @property blocks: 학습 블록 배열
+ * @property addBlock: 블록을 추가하는 함수
+ * @property deleteBlock: 블록을 삭제하는 함수
+ * @property updateBlock: 블록을 수정하는 함수
+ * @property conflictError: 시간 충돌 에러 메시지
+ * @property clearError: 에러 메시지를 초기화하는 함수
  */
-
-// 상태 인터페이스 정의
 interface PlannerState {
+  weekStart: string;
+  setWeekStart: (dateStr: string) => void;
   blocks: StudyBlock[];
   addBlock: (block: StudyBlock) => void;
   deleteBlock: (id: string) => void;
@@ -19,8 +25,15 @@ interface PlannerState {
   clearError: () => void;
 }
 
-// 스토어 생성
+/**
+ * 학습 플래너 상태 관리 스토어
+ * - addBlock: 블록 추가
+ * - deleteBlock: 블록 삭제
+ * - updateBlock: 블록 수정
+ */
 export const usePlannerStore = create<PlannerState>((set, get) => ({
+  weekStart: startOfWeek(),
+  setWeekStart: (dateStr: string) => set({ weekStart: dateStr }),
   blocks: [],
   conflictError: null,
   // 블록 추가
