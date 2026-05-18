@@ -18,10 +18,10 @@ export const getCourses = async (): Promise<CourseListResponse> => {
 
 // 플래너(시간표) 조회
 export const getPlanner = async (
-  weekStart: string
+  weekStart?: string
 ): Promise<PlannerResponse> => {
   const response = await plannerApi.get<PlannerResponse>('/planner', {
-    params: { weekStart },
+    params: weekStart ? { weekStart } : {},
   });
   return response.data;
 };

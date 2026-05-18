@@ -1,22 +1,23 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import MSWProvider from "@/components/providers/MSWProvider";
-import QueryProvider from "@/components/providers/QueryProvider";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono } from 'next/font/google';
+import MSWProvider from '@/components/providers/MSWProvider';
+import QueryProvider from '@/components/providers/QueryProvider';
+import { Toaster } from 'react-hot-toast';
+import './globals.css';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "LiveClass 학습 플래너",
-  description: "30분 단위 학습 계획을 관리하는 스터디 플래너",
+  title: 'LiveClass 학습 플래너',
+  description: '30분 단위 학습 계획을 관리하는 스터디 플래너',
 };
 
 export default function RootLayout({
@@ -33,6 +34,7 @@ export default function RootLayout({
         <MSWProvider>
           <QueryProvider>{children}</QueryProvider>
         </MSWProvider>
+        <Toaster position="top-center" />
       </body>
     </html>
   );
