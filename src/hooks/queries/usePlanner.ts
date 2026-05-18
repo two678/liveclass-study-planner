@@ -3,6 +3,7 @@ import { getPlanner, savePlanner } from '@/api/planner';
 import toast from 'react-hot-toast';
 import { AxiosError } from 'axios';
 import type { ErrorResponse } from '@/types/planner';
+import { PLANNER_ERROR_MESSAGES } from '@/constants/planner';
 
 /**
  * @description 플래너(시간표) 조회
@@ -28,8 +29,16 @@ export const useSavePlanner = () => {
     },
     onError: (error) => {
       if (error instanceof AxiosError) {
-        const serverMessage = (error.response?.data as ErrorResponse)?.message;
-        toast.error(serverMessage || '시간표 저장 중 오류가 발생했습니다.');
+        const errData = error.response?.data as ErrorResponse;
+
+        // 1. 서버가 보내준 구체적인 에러 메시지 (ex: "파이썬 기초 시간과 겹칩니다")
+        // 2. 사전에 정의된 기본 에러 메시지 (ex: PLANNER_ERROR_MESSAGES['INVALID_TIME_RANGE'])
+        // 3. 알 수 없는 오류
+        const message =
+          errData?.message ||
+          (errData?.code ? PLANNER_ERROR_MESSAGES[errData.code] : undefined);
+
+        toast.error(message || '시간표 저장 중 오류가 발생했습니다.');
       } else {
         toast.error('시간표 저장 중 알 수 없는 오류가 발생했습니다.');
       }
