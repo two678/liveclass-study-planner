@@ -1,9 +1,17 @@
+'use client';
 import { HOURS, DAYS } from '@/constants/planner';
+import { usePlannerStore } from '@/store/usePlannerStore';
 import React from 'react';
 
 export default function TimeGrid() {
+  const { blocks } = usePlannerStore();
+
+  const handleCellClick = (day: string, hour: string) => {
+    console.log(`${day} - ${hour}`);
+  };
+
   return (
-    <div className="bg-white border-2 border-black rounded-lg w-360 h-full mx-auto p-6 grid grid-cols-8">
+    <div className="relative bg-white border-2 border-black rounded-lg w-full max-w-[1440px] h-full mx-auto p-6 grid grid-cols-8">
       {/* --- 1. 헤더 부분 (첫 번째 줄) --- */}
       {/* 좌측 상단 빈 공간 */}
       <div className="border border-black bg-gray-100"></div>
@@ -29,6 +37,7 @@ export default function TimeGrid() {
             <div
               key={`${day}-${hour}`}
               className="border border-gray-300 hover:bg-blue-50 cursor-pointer"
+              onClick={() => handleCellClick(day, hour)}
             >
               {/* 여기에 나중에 드래그나 클릭 로직이 들어갑니다 */}
             </div>
@@ -38,11 +47,3 @@ export default function TimeGrid() {
     </div>
   );
 }
-
-// function Weekend() {
-//   return (
-//     <div className="flex w-28 h-full border border-black justify-center items-center">
-//         for
-//     </div>
-//   );
-// }

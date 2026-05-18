@@ -1,4 +1,4 @@
-import TimeGrid from '@/components/TimeGrid';
+import TimeGrid from '@/components/planner/TimeGrid';
 
 export default function Home() {
   return (
