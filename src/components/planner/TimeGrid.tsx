@@ -2,6 +2,7 @@
 import { HOURS, DAYS } from '@/constants/planner';
 import { usePlannerStore } from '@/store/usePlannerStore';
 import React from 'react';
+import StudyBlockItem from './StuckBlockItem';
 
 export default function TimeGrid() {
   const { blocks } = usePlannerStore();
@@ -44,6 +45,12 @@ export default function TimeGrid() {
           ))}
         </React.Fragment>
       ))}
+      {/* --- 등록된 블록들 레이어 (추가되는 부분) --- */}
+      <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
+        {blocks.map((block) => (
+          <StudyBlockItem key={block.id} block={block} />
+        ))}
+      </div>
     </div>
   );
 }
