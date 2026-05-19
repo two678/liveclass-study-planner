@@ -56,7 +56,7 @@ export default function WeeklySummary({ blocks, courses }: Props) {
   });
 
   return (
-    <div className="mt-8 bg-gray-50 border border-gray-200 rounded-2xl p-6 w-full max-w-[1440px] mx-auto shadow-sm">
+    <div className="mt-8 bg-gray-50 border border-gray-200 rounded-2xl p-6 w-full max-w-360 mx-auto shadow-sm">
       <h3 className="text-xl font-extrabold text-gray-900 mb-6 flex items-center gap-2">
         📊 실시간 주간 학습 요약
         <span className="text-xs font-normal text-gray-500 bg-gray-200/60 px-2 py-0.5 rounded-full">

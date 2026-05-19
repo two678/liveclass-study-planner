@@ -36,7 +36,7 @@ export default function TimeGrid() {
   // 로딩 상태
   if (isLoading || !mounted) {
     return (
-      <div className="flex flex-col justify-center items-center h-[600px] w-full text-gray-500 font-bold gap-3">
+      <div className="flex flex-col justify-center items-center h-150 w-full text-gray-500 font-bold gap-3">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500" />
         <span>시간표를 불러오는 중입니다...</span>
       </div>
@@ -44,7 +44,7 @@ export default function TimeGrid() {
   }
 
   return (
-    <div className="w-full max-w-[1440px] mx-auto px-4 flex flex-col gap-6">
+    <div className="w-full max-w-360 mx-auto px-4 flex flex-col gap-6">
       {/* 상단 패널 */}
       <TimeGridControlPanel
         weekStart={weekStart}
