@@ -4,6 +4,7 @@ import { StudyBlock } from '@/types/planner';
 import { usePlannerStore } from '@/store/usePlannerStore';
 import { usePlanner, useSavePlanner } from '@/hooks/queries/usePlanner';
 import { useCourses } from '@/hooks/queries/useCourses';
+import { DAYS } from '@/constants/planner';
 import StudyBlockModal from './StudyBlockModal';
 import TimeGridHeader from './TimeGridHeader';
 import TimeGridBackground from './TimeGridBackground';
@@ -14,6 +15,18 @@ export default function TimeGrid() {
   // Zustand 스토어에서 로컬 드래프트 상태들을 가져옵니다.
   const { weekStart, setWeekStart, blocks, setBlocks, isDirty, setDirty } =
     usePlannerStore();
+
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // 모달 상태 관리
   const [modalState, setModalState] = useState<{
@@ -173,16 +186,48 @@ export default function TimeGrid() {
         </div>
       </div>
 
-      {/* 메인 7x25 요일 및 시간표 그리드 */}
-      <div className="relative bg-white border-2 border-black rounded-2xl p-6 grid grid-cols-8 shadow-md">
+      {/* 모바일 전용 요일 탭 선택기 */}
+      {isMobile && (
+        <div className="flex justify-between items-center bg-gray-50 border border-gray-200 rounded-2xl p-2 shadow-inner gap-1">
+          {DAYS.map((day, idx) => (
+            <button
+              key={day}
+              onClick={() => setSelectedDayIndex(idx)}
+              className={`flex-1 py-2 text-center text-xs font-extrabold rounded-lg transition-all ${
+                selectedDayIndex === idx
+                  ? 'bg-blue-600 text-white shadow-sm transform scale-105'
+                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              }`}
+            >
+              {day}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* 메인 요일 및 시간표 그리드 (데스크톱: 8열, 모바일: 2열) */}
+      <div
+        className={`relative bg-white border-2 border-black rounded-2xl p-4 md:p-6 grid shadow-md ${
+          isMobile ? 'grid-cols-2' : 'grid-cols-8'
+        }`}
+      >
         {/* 1. 상단 요일 헤더 */}
-        <TimeGridHeader />
+        <TimeGridHeader
+          isMobile={isMobile}
+          selectedDayIndex={selectedDayIndex}
+        />
 
         {/* 2. 시간대별 배경 및 빈 셀 */}
-        <TimeGridBackground onCellClick={handleCellClick} />
+        <TimeGridBackground
+          isMobile={isMobile}
+          selectedDayIndex={selectedDayIndex}
+          onCellClick={handleCellClick}
+        />
 
         {/* 3. 등록된 학습 블록(일정) 레이어 */}
         <TimeGridBlocks
+          isMobile={isMobile}
+          selectedDayIndex={selectedDayIndex}
           blocks={blocks}
           courses={courses}
           onBlockClick={handleBlockClick}

@@ -2,10 +2,16 @@ import React from 'react';
 import { HOURS, DAYS } from '@/constants/planner';
 
 interface Props {
+  isMobile: boolean;
+  selectedDayIndex: number;
   onCellClick: (day: string, hour: string) => void;
 }
 
-export default function TimeGridBackground({ onCellClick }: Props) {
+export default function TimeGridBackground({
+  isMobile,
+  selectedDayIndex,
+  onCellClick,
+}: Props) {
   return (
     <>
       {HOURS.map((hour, idx) => {
@@ -20,17 +26,25 @@ export default function TimeGridBackground({ onCellClick }: Props) {
               {hour}
             </div>
 
-            {/* (2) 해당 시간대의 각 요일별 빈 칸 (7칸) */}
-            {DAYS.map((day, dayIdx) => (
-              <div
-                key={`${day}-${hour}`}
-                className="border border-gray-300 hover:bg-blue-50 cursor-pointer"
-                style={{ gridColumn: dayIdx + 2, gridRow: row }}
-                onClick={() => onCellClick(day, hour)}
-              >
-                {/* 빈 셀 영역 */}
-              </div>
-            ))}
+            {/* (2) 해당 시간대의 각 요일별 빈 칸 */}
+            {DAYS.map((day, dayIdx) => {
+              const isSelected = dayIdx === selectedDayIndex;
+              if (isMobile && !isSelected) return null;
+
+              return (
+                <div
+                  key={`${day}-${hour}`}
+                  className="border border-gray-300 hover:bg-blue-50 cursor-pointer"
+                  style={{
+                    gridColumn: isMobile ? 2 : dayIdx + 2,
+                    gridRow: row,
+                  }}
+                  onClick={() => onCellClick(day, hour)}
+                >
+                  {/* 빈 셀 영역 */}
+                </div>
+              );
+            })}
           </React.Fragment>
         );
       })}

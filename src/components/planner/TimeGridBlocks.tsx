@@ -2,12 +2,16 @@ import { StudyBlock, Course } from '@/types/planner';
 import StudyBlockItem from './StudyBlockItem';
 
 interface Props {
+  isMobile: boolean;
+  selectedDayIndex: number;
   blocks: StudyBlock[];
   courses: Course[];
   onBlockClick: (block: StudyBlock) => void;
 }
 
 export default function TimeGridBlocks({
+  isMobile,
+  selectedDayIndex,
   blocks,
   courses,
   onBlockClick,
@@ -20,7 +24,10 @@ export default function TimeGridBlocks({
   return (
     <>
       {blocks.map((block) => {
-        const col = block.dayOfWeek + 2;
+        const isSelected = block.dayOfWeek === selectedDayIndex;
+        if (isMobile && !isSelected) return null;
+
+        const col = isMobile ? 2 : block.dayOfWeek + 2;
         const rowStart = Math.max(getGridRowStart(block.startTime), 2);
         const mathRowEnd = getGridRowStart(block.endTime);
         // 20:00 이상으로 끝나는 블록은 20:00 격자 행(row 26)을 완전히 채워 그리드 하단 경계선에 닿도록 rowEnd를 27로 지정합니다.
