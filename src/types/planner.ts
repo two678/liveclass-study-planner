@@ -38,7 +38,14 @@ export interface PlannerResponse {
  */
 export interface SavePlannerRequest {
   weekStart: string;
-  blocks: Array<Omit<StudyBlock, 'id'> & { id?: string }>;
+  blocks: Array<{
+    id?: string;
+    courseId: string;
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+    memo?: string;
+  }>;
 }
 
 /**

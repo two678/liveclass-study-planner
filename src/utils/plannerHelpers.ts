@@ -39,15 +39,21 @@ export const getConflictMessage = (
  *
  * @param newBlock - 추가하려는 새 블록
  * @param existingBlocks - 기존 블록 배열
+ * @param targetId - 수정하려는 블록의 id (수정 시 사용)
  * @returns 충돌하는 블록이 있으면 메시지 반환, 없으면 null 반환
  */
 export const validateConflict = (
-  newBlock: StudyBlock,
-  existingBlocks: StudyBlock[]
+  newBlock: Omit<StudyBlock, 'id'>,
+  existingBlocks: StudyBlock[],
+  targetId?: string
 ) => {
+  if (newBlock.startTime >= newBlock.endTime) {
+    return '종료 시간은 시작 시간보다 늦어야 합니다.';
+  }
+
   const conflict = existingBlocks.find((existingBlock) => {
-    if (newBlock.id && existingBlock.id === newBlock.id) return false;
-    return isOverlapping(newBlock, existingBlock);
+    if (existingBlock.id === targetId) return false;
+    return isOverlapping(newBlock as StudyBlock, existingBlock);
   });
 
   if (conflict) {
