@@ -107,10 +107,17 @@ export default function TimeGrid() {
 
   // 일괄 저장 버튼 클릭 핸들러
   const handleBatchSave = () => {
-    savePlanner({
-      weekStart,
-      blocks,
-    });
+    savePlanner(
+      {
+        weekStart,
+        blocks,
+      },
+      {
+        onSuccess: () => {
+          setDirty(false);
+        },
+      }
+    );
   };
 
   return (
