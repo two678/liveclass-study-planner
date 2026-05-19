@@ -3,17 +3,20 @@ import { StudyBlock } from '@/types/planner';
 import Select from '@/components/common/Select';
 import { useCourses } from '@/hooks/queries/useCourses';
 import { HOURS, DAYS } from '@/constants/planner';
+import FormActions from '@/components/common/FormActions';
+
 interface Props {
   day?: string;
   hour?: string;
   block?: StudyBlock;
+  onClose: () => void;
 }
 
-export default function StudyBlockEditForm({ hour, block }: Props) {
+export default function StudyBlockEditForm({ block, onClose }: Props) {
   const { data: coursesData } = useCourses();
   // 1. 상태 초기화: 수정 모드면 block 데이터, 추가 모드면 클릭한 위치(hour) 데이터
   const [startTime, setStartTime] = useState<string>(
-    block?.startTime || hour || '08:00'
+    block?.startTime || '08:00'
   );
   const [endTime, setEndTime] = useState<string>(block?.endTime || '');
   const [courseId, setCourseId] = useState<string>(block?.courseId || '');
@@ -33,9 +36,20 @@ export default function StudyBlockEditForm({ hour, block }: Props) {
       color: c.color,
     })) || [];
 
+  const handleSave = () => {
+    console.log('Edit saved:', {
+      dayOfWeek,
+      startTime,
+      endTime,
+      courseId,
+      memo,
+    });
+    // TODO: Zustand 스토어에 수정된 블록 업데이트 로직 연동
+    onClose();
+  };
+
   return (
-    <div className="space-y-4">
-      <h2 className="text-lg font-bold">{'학습 일정 수정'}</h2>
+    <div className="space-y-5">
       {/* 요일 */}
       <Select
         value={dayOfWeek}
@@ -69,12 +83,20 @@ export default function StudyBlockEditForm({ hour, block }: Props) {
         label="Course"
       />
       {/* 메모 (텍스트 영역) */}
-      <textarea
-        value={memo}
-        onChange={(e) => setMemo(e.target.value)}
-        className="w-full border p-2 rounded"
-        placeholder="메모를 입력하세요 (최대 200자)"
-      />
+      <div>
+        <label className="block text-sm font-bold text-gray-700 mb-1">
+          메모
+        </label>
+        <textarea
+          value={memo}
+          onChange={(e) => setMemo(e.target.value)}
+          className="w-full border border-gray-300 p-3 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none transition-shadow"
+          placeholder="메모를 입력하세요 (최대 200자)"
+          rows={3}
+        />
+      </div>
+
+      <FormActions onCancel={onClose} onSave={handleSave} />
     </div>
   );
 }
