@@ -28,12 +28,12 @@ export default function TimeGrid() {
   const { data: courseData } = useCourses();
   const { mutate: savePlanner, isPending: isSaving } = useSavePlanner();
 
-  // 1. 서버 데이터를 로컬 스토어에 동기화 (단, 미저장 변경사항이 없을 때만 동기화하여 드래프트 덮어쓰기 방지)
+  // 1. 주간 시작일(weekStart)이 변경되거나 서버 데이터가 로드되면 로컬 스토어에 즉각 동기화 (stale 데이터 표시 방지)
   useEffect(() => {
-    if (plannerData?.blocks && !isDirty) {
-      setBlocks(plannerData.blocks);
+    if (!isDirty) {
+      setBlocks(plannerData?.blocks || []);
     }
-  }, [plannerData?.blocks, isDirty, setBlocks]);
+  }, [plannerData?.blocks, weekStart, isDirty, setBlocks]);
 
   // 2. 브라우저 새로고침 및 이탈 방지 경고 처리 (dirty 상태인 경우)
   useEffect(() => {
