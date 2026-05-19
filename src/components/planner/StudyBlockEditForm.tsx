@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { StudyBlock } from '@/types/planner';
+import toast from 'react-hot-toast';
 import Select from '@/components/common/Select';
 import { useCourses } from '@/hooks/queries/useCourses';
 import { HOURS, DAYS } from '@/constants/planner';
@@ -55,6 +56,7 @@ export default function StudyBlockEditForm({ block, onClose }: Props) {
 
   const handleDelete = () => {
     deleteBlock(block.id);
+    toast.success('학습 일정이 삭제되었습니다. 저장 시 최종 반영됩니다! 🗑️');
     onClose();
   };
 
