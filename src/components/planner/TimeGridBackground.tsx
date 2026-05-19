@@ -14,7 +14,7 @@ export default function TimeGridBackground({ onCellClick }: Props) {
           <React.Fragment key={hour}>
             {/* (1) 시간 텍스트 (가장 왼쪽 1칸) */}
             <div
-              className="border border-black text-right pr-2 py-3 text-sm text-gray-500"
+              className="border border-black text-right pr-2 py-3 text-sm text-gray-500 font-bold bg-gray-50/50"
               style={{ gridColumn: 1, gridRow: row }}
             >
               {hour}
