@@ -1,34 +1,51 @@
 'use client';
+
 import { useState, useEffect } from 'react';
 import { StudyBlock } from '@/types/planner';
 import { usePlannerStore } from '@/store/usePlannerStore';
 import { usePlanner, useSavePlanner } from '@/hooks/queries/usePlanner';
 import { useCourses } from '@/hooks/queries/useCourses';
-import { DAYS } from '@/constants/planner';
 import StudyBlockModal from './StudyBlockModal';
 import TimeGridHeader from './TimeGridHeader';
 import TimeGridBackground from './TimeGridBackground';
 import TimeGridBlocks from './TimeGridBlocks';
 import WeeklySummary from './WeeklySummary';
+import TimeGridControlPanel from './TimeGridControlPanel';
+import TimeGridMobileTabs from './TimeGridMobileTabs';
 
+/**
+ * [Component] TimeGrid
+ * * 주간 학습 플래너의 핵심 조정자(Orchestrator) 역할을 담당합니다.
+ * * - 상태 관리: Zustand 스토어(클라이언트 로컬 드래프트 상태)와 React Query(서버 상태)를 명확히 분리하여 바인딩합니다.
+ * * - 반응형 디자인: 모바일 기기 크기 감지 및 렌더링 최적화를 진행하며, 하이드레이션 오류 방지를 위해 mounted 완료 후 마운팅 처리를 지원합니다.
+ * * - 컴포넌트 설계: 단일 파일 100~120라인 이하 유지 규칙을 만족하기 위해 제어 패널(TimeGridControlPanel) 및 모바일 요일 탭바(TimeGridMobileTabs)를 개별 독립 컴포넌트로 완전히 격리하여 설계했습니다.
+ */
 export default function TimeGrid() {
-  // Zustand 스토어에서 로컬 드래프트 상태들을 가져옵니다.
+  // Zustand 스토어 데이터 구조 바인딩
   const { weekStart, setWeekStart, blocks, setBlocks, isDirty, setDirty } =
     usePlannerStore();
 
+  const [mounted, setMounted] = useState<boolean>(false);
   const [selectedDayIndex, setSelectedDayIndex] = useState<number>(0);
   const [isMobile, setIsMobile] = useState<boolean>(false);
 
+  // 컴포넌트 마운트 추적 및 화면 해상도 변화 감지
   useEffect(() => {
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768);
     };
     checkMobile();
     window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('resize', checkMobile);
+    };
   }, []);
 
-  // 모달 상태 관리
+  // 모달 제어 상태
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
     mode: 'create' | 'edit';
@@ -37,23 +54,24 @@ export default function TimeGrid() {
     block?: StudyBlock;
   }>({ isOpen: false, mode: 'create' });
 
+  // 서버 통신(React Query) 훅 연동
   const { data: plannerData, isLoading } = usePlanner(weekStart);
   const { data: courseData } = useCourses();
   const { mutate: savePlanner, isPending: isSaving } = useSavePlanner();
 
-  // 1. 주간 시작일(weekStart)이 변경되거나 서버 데이터가 로드되면 로컬 스토어에 즉각 동기화 (stale 데이터 표시 방지)
+  // 서버 데이터 수신 시 로컬 스토어에 동기화
   useEffect(() => {
-    if (!isDirty) {
-      setBlocks(plannerData?.blocks || []);
+    if (!isDirty && plannerData?.blocks) {
+      setBlocks(plannerData.blocks);
     }
   }, [plannerData?.blocks, weekStart, isDirty, setBlocks]);
 
-  // 2. 브라우저 새로고침 및 이탈 방지 경고 처리 (dirty 상태인 경우)
+  // 페이지 이탈(새로고침/창 닫기) 시 미저장 변경사항 방지 팝업 트리거
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       if (isDirty) {
         e.preventDefault();
-        e.returnValue = ''; // 표준 브라우저 경고 대화상자 트리거
+        e.returnValue = '';
       }
     };
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -64,27 +82,32 @@ export default function TimeGrid() {
 
   const courses = courseData?.courses || [];
 
-  if (isLoading)
+  // 초기 로딩 상태 및 서버 마운트 완료 전 상태 뼈대 노출
+  if (isLoading || !mounted) {
     return (
       <div className="flex flex-col justify-center items-center h-[600px] w-full text-gray-500 font-bold gap-3">
         <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-500" />
         <span>시간표를 불러오는 중입니다...</span>
       </div>
     );
+  }
 
+  // 시간 빈 칸 클릭 시 추가 모달 오픈
   const handleCellClick = (day: string, hour: string) => {
     setModalState({ isOpen: true, mode: 'create', day, hour });
   };
 
+  // 등록된 학습 블록 클릭 시 상세 편집 모달 오픈
   const handleBlockClick = (block: StudyBlock) => {
     setModalState({ isOpen: true, mode: 'edit', block });
   };
 
+  // 모달 닫기
   const closeModal = () => {
     setModalState((prev) => ({ ...prev, isOpen: false }));
   };
 
-  // 주간 이동 핸들러 (미저장 변경사항이 있으면 확인창 표시)
+  // 주간 단위 이동 (이동 시 미저장 데이터 보호 안전장치 포함)
   const moveWeek = (days: number) => {
     if (isDirty) {
       const confirmMove = window.confirm(
@@ -98,27 +121,11 @@ export default function TimeGrid() {
     const mm = String(current.getMonth() + 1).padStart(2, '0');
     const dd = String(current.getDate()).padStart(2, '0');
 
-    // 이동 시 로컬 상태 초기화 및 주간 시작일 갱신
     setWeekStart(`${yyyy}-${mm}-${dd}`);
     setDirty(false);
   };
 
-  // 주간 날짜 범위 텍스트 파싱
-  const getWeekRangeString = (startStr: string) => {
-    const start = new Date(startStr);
-    const end = new Date(start);
-    end.setDate(end.getDate() + 6);
-
-    const formatDate = (d: Date) => {
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${mm}월 ${dd}일`;
-    };
-
-    return `${start.getFullYear()}년 ${formatDate(start)} ~ ${formatDate(end)}`;
-  };
-
-  // 일괄 저장 버튼 클릭 핸들러
+  // 로컬 스크롤에 임시 기록된 드래프트를 서버에 일괄 PUT 저장
   const handleBatchSave = () => {
     savePlanner(
       {
@@ -135,98 +142,45 @@ export default function TimeGrid() {
 
   return (
     <div className="w-full max-w-[1440px] mx-auto px-4 flex flex-col gap-6">
-      {/* 컨트롤 패널 상단 영역 */}
-      <div className="flex flex-col sm:flex-row justify-between items-center bg-gray-50 border border-gray-200 rounded-2xl p-5 shadow-sm gap-4">
-        {/* 주간 이동 내비게이션 */}
-        <div className="flex items-center gap-4">
-          <button
-            onClick={() => moveWeek(-7)}
-            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            ◀ 이전 주
-          </button>
-          <span className="text-lg font-bold text-gray-800 tracking-tight">
-            {getWeekRangeString(weekStart)}
-          </span>
-          <button
-            onClick={() => moveWeek(7)}
-            className="px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-xl hover:bg-gray-50 transition-colors shadow-sm"
-          >
-            다음 주 ▶
-          </button>
-        </div>
+      {/* 1. 상단 제어 및 네비게이션 헤더 컴포넌트 */}
+      <TimeGridControlPanel
+        weekStart={weekStart}
+        isDirty={isDirty}
+        isSaving={isSaving}
+        onMoveWeek={moveWeek}
+        onSave={handleBatchSave}
+      />
 
-        {/* 저장 상태 표시 및 저장 버튼 */}
-        <div className="flex items-center gap-4">
-          {isDirty && (
-            <div className="flex items-center gap-2 text-amber-600 bg-amber-50 border border-amber-200 px-3.5 py-1.5 rounded-full text-xs font-bold animate-pulse shadow-sm">
-              <span className="h-2 w-2 rounded-full bg-amber-500 inline-block" />
-              저장하지 않은 변경사항이 있습니다
-            </div>
-          )}
-
-          <button
-            onClick={handleBatchSave}
-            disabled={isSaving || !isDirty}
-            className={`px-6 py-2.5 rounded-xl font-bold text-sm transition-all shadow-sm flex items-center gap-2 ${
-              isDirty
-                ? 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
-                : 'bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200 shadow-none'
-            }`}
-          >
-            {isSaving ? (
-              <>
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                저장 중...
-              </>
-            ) : (
-              '시간표 저장'
-            )}
-          </button>
-        </div>
-      </div>
-
-      {/* 모바일 전용 프리미엄 세그먼티드 요일 선택 탭 */}
+      {/* 2. 모바일 전용 세그먼티드 요일 선택 탭바 */}
       {isMobile && (
-        <div className="flex justify-between items-center bg-gray-100/70 border border-gray-200/40 rounded-2xl p-1 shadow-inner gap-0.5">
-          {DAYS.map((day, idx) => (
-            <button
-              key={day}
-              onClick={() => setSelectedDayIndex(idx)}
-              className={`flex-1 py-2.5 text-center text-xs rounded-xl transition-all duration-200 ${
-                selectedDayIndex === idx
-                  ? 'bg-white text-blue-600 shadow-[0_2px_6px_rgba(0,0,0,0.05)] border border-gray-200/10 font-black'
-                  : 'text-gray-500 hover:text-gray-800 font-bold bg-transparent'
-              }`}
-            >
-              {day}
-            </button>
-          ))}
-        </div>
+        <TimeGridMobileTabs
+          selectedDayIndex={selectedDayIndex}
+          onSelectDay={setSelectedDayIndex}
+        />
       )}
 
-      {/* 메인 요일 및 시간표 그리드 (데스크톱: 8열, 모바일: 비대칭 65px/1fr 열) */}
+      {/* 3. 학습 스케줄 주간 그리드 본체 */}
       <div
         className={`relative rounded-3xl p-4 md:p-6 grid transition-all ${
           isMobile
-            ? 'bg-gray-50/50 border border-gray-200 shadow-xl shadow-blue-900/5 grid-cols-[65px_1fr] gap-x-2.5 gap-y-1'
-            : 'bg-white border-2 border-black grid-cols-8 shadow-md'
+            ? 'bg-gray-50/50 border border-gray-200 shadow-xl grid-cols-[65px_1fr] gap-x-2.5 gap-y-1'
+            : 'bg-white border border-gray-300 grid-cols-8 shadow-sm'
         }`}
       >
-        {/* 1. 상단 요일 헤더 */}
+        {/* 그리드: 요일 헤더 */}
         <TimeGridHeader
           isMobile={isMobile}
           selectedDayIndex={selectedDayIndex}
         />
 
-        {/* 2. 시간대별 배경 및 빈 셀 */}
+        {/* 그리드: 배경 칸 및 마우스 클릭 핸들러 */}
         <TimeGridBackground
           isMobile={isMobile}
           selectedDayIndex={selectedDayIndex}
           onCellClick={handleCellClick}
         />
 
-        {/* 3. 등록된 학습 블록(일정) 레이어 */}
+        {/* 그리드: 생성된 학습 블록 카드 */}
         <TimeGridBlocks
           isMobile={isMobile}
           selectedDayIndex={selectedDayIndex}
@@ -236,10 +190,10 @@ export default function TimeGrid() {
         />
       </div>
 
-      {/* 4. 실시간 주간 요약 대시보드 */}
+      {/* 4. 실시간 주간 요약 통계 대시보드 */}
       <WeeklySummary blocks={blocks} courses={courses} />
 
-      {/* 5. 블록 추가/상세 모달 */}
+      {/* 5. 학습 블록 생성/수정 상세 제어 모달 */}
       <StudyBlockModal
         isOpen={modalState.isOpen}
         mode={modalState.mode}
