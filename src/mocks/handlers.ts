@@ -20,56 +20,58 @@ const mockCourses = [
   { id: 'cs005', title: '자바스크립트', color: '#E9D5FF' },
 ];
 
-let mockPlannerBlocks: StudyBlock[] = [
-  {
-    id: 'plan001',
-    courseId: 'cs001',
-    dayOfWeek: 0, // 월
-    startTime: '09:00',
-    endTime: '11:00',
-    memo: '파이썬 데이터 분석 기초반 - 1주차 환경 설정 및 기본 문법 뽀개기 🐍',
-  },
-  {
-    id: 'plan002',
-    courseId: 'cs003',
-    dayOfWeek: 1, // 화
-    startTime: '14:00',
-    endTime: '16:00',
-    memo: '타입스크립트 제네릭과 유틸리티 타입 딥다이브 스터디 준비 완료하기',
-  },
-  {
-    id: 'plan003',
-    courseId: 'cs002',
-    dayOfWeek: 2, // 수
-    startTime: '18:00',
-    endTime: '20:00',
-    memo: '리액트 성능 최적화 (useMemo, useCallback) 실전 적용 과제 마무으리🔥',
-  },
-  {
-    id: 'plan004',
-    courseId: 'cs004',
-    dayOfWeek: 3, // 목
-    startTime: '10:00',
-    endTime: '12:00',
-    memo: '백준 알고리즘 골드 문제 풀이 및 스터디원 코드 리뷰 시간 💻',
-  },
-  {
-    id: 'plan005',
-    courseId: 'cs005',
-    dayOfWeek: 4, // 금
-    startTime: '17:00',
-    endTime: '19:30',
-    memo: '모던 자바스크립트 비동기 처리(Promise, async/await) 완벽하게 이해하고 넘어가기',
-  },
-  {
-    id: 'plan006',
-    courseId: 'cs002',
-    dayOfWeek: 5, // 토
-    startTime: '13:00',
-    endTime: '18:00',
-    memo: '주말 빡코딩! 리액트 상태관리 라이브러리(Zustand) 적용해서 메인 페이지 리팩토링 🚀',
-  },
-];
+const mockPlannerWeeks: Record<string, StudyBlock[]> = {
+  '2026-05-18': [
+    {
+      id: 'plan001',
+      courseId: 'cs001',
+      dayOfWeek: 0, // 월
+      startTime: '09:00',
+      endTime: '11:00',
+      memo: '파이썬 데이터 분석 기초반 - 1주차 환경 설정 및 기본 문법 뽀개기 🐍',
+    },
+    {
+      id: 'plan002',
+      courseId: 'cs003',
+      dayOfWeek: 1, // 화
+      startTime: '14:00',
+      endTime: '16:00',
+      memo: '타입스크립트 제네릭과 유틸리티 타입 딥다이브 스터디 준비 완료하기',
+    },
+    {
+      id: 'plan003',
+      courseId: 'cs002',
+      dayOfWeek: 2, // 수
+      startTime: '18:00',
+      endTime: '20:00',
+      memo: '리액트 성능 최적화 (useMemo, useCallback) 실전 적용 과제 마무으리🔥',
+    },
+    {
+      id: 'plan004',
+      courseId: 'cs004',
+      dayOfWeek: 3, // 목
+      startTime: '10:00',
+      endTime: '12:00',
+      memo: '백준 알고리즘 골드 문제 풀이 및 스터디원 코드 리뷰 시간 💻',
+    },
+    {
+      id: 'plan005',
+      courseId: 'cs005',
+      dayOfWeek: 4, // 금
+      startTime: '17:00',
+      endTime: '19:30',
+      memo: '모던 자바스크립트 비동기 처리(Promise, async/await) 완벽하게 이해하고 넘어가기',
+    },
+    {
+      id: 'plan006',
+      courseId: 'cs002',
+      dayOfWeek: 5, // 토
+      startTime: '13:00',
+      endTime: '18:00',
+      memo: '주말 빡코딩! 리액트 상태관리 라이브러리(Zustand) 적용해서 메인 페이지 리팩토링 🚀',
+    },
+  ],
+};
 
 export const handlers = [
   // 강좌 목록 조회
@@ -80,10 +82,13 @@ export const handlers = [
   }),
 
   // 플래너(시간표) 조회
-  http.get('/api/planner', () => {
+  http.get('/api/planner', ({ request }) => {
+    const url = new URL(request.url);
+    const weekStart = url.searchParams.get('weekStart') || '2026-05-18';
+    const blocks = mockPlannerWeeks[weekStart] || [];
     return HttpResponse.json<PlannerResponse>({
-      weekStart: '2026-05-18', // 월요일
-      blocks: mockPlannerBlocks,
+      weekStart,
+      blocks,
     });
   }),
   // 플래너(시간표) 저장 (PUT 요청)
@@ -165,7 +170,7 @@ export const handlers = [
           id: block.id || `saved-plan-${Date.now()}-${index}`,
         })) as StudyBlock[];
 
-        mockPlannerBlocks = savedBlocks;
+        mockPlannerWeeks[weekStart] = savedBlocks;
 
         // 최종 성공 응답 반환
         return HttpResponse.json<PlannerResponse>({
