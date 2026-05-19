@@ -16,19 +16,19 @@ export default function StudyBlockItem({ block, course, onClick }: Props) {
     >
       <div className="flex flex-col gap-0.5">
         {/* 과목명 */}
-        <span className="font-extrabold text-xs text-gray-900 tracking-tight truncate">
+        <span className="font-extrabold text-xs md:text-sm text-gray-900 tracking-tight truncate">
           {course?.title || block.courseId}
         </span>
         {/* 메모가 등록된 경우 */}
         {block.memo && (
-          <span className="text-[10px] text-gray-700/90 leading-normal line-clamp-2 font-medium">
+          <span className="text-[10px] md:text-xs text-gray-700/90 leading-normal line-clamp-2 font-medium">
             {block.memo}
           </span>
         )}
       </div>
 
       {/* 시작 및 종료 시간 */}
-      <span className="text-[9px] font-black text-gray-500/80 tracking-tighter mt-1 block self-end">
+      <span className="text-[10px] md:text-xs font-black text-gray-700/80 tracking-tighter mt-1 block self-end">
         {block.startTime} ~ {block.endTime}
       </span>
     </div>
