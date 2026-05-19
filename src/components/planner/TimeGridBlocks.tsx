@@ -41,7 +41,7 @@ export default function TimeGridBlocks({
         return (
           <div
             key={block.id}
-            className="z-10 p-0.5"
+            className={`z-10 ${isMobile ? 'p-1' : 'p-0.5'}`}
             style={{
               gridColumn: col,
               gridRow: `${rowStart} / ${rowEnd}`,

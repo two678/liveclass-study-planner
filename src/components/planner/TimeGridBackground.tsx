@@ -20,10 +20,14 @@ export default function TimeGridBackground({
           <React.Fragment key={hour}>
             {/* (1) 시간 텍스트 (가장 왼쪽 1칸) */}
             <div
-              className="border border-black text-right pr-2 py-3 text-sm text-gray-500 font-bold bg-gray-50/50"
+              className={`flex items-center justify-center transition-all ${
+                isMobile
+                  ? 'border-none bg-transparent py-2.5 text-[12px] text-gray-500 font-bold'
+                  : 'border border-black bg-gray-50/50 text-right pr-3 py-3 text-xs text-gray-400 font-extrabold'
+              }`}
               style={{ gridColumn: 1, gridRow: row }}
             >
-              {hour}
+              {isMobile ? (hour.endsWith(':30') ? '\u200B' : hour) : hour}
             </div>
 
             {/* (2) 해당 시간대의 각 요일별 빈 칸 */}
@@ -34,7 +38,11 @@ export default function TimeGridBackground({
               return (
                 <div
                   key={`${day}-${hour}`}
-                  className="border border-gray-300 hover:bg-blue-50 cursor-pointer"
+                  className={`hover:bg-blue-50/30 cursor-pointer transition-all duration-200 ${
+                    isMobile
+                      ? 'border border-gray-100 bg-white rounded-xl shadow-[0_1px_2px_rgba(0,0,0,0.015)] hover:scale-[1.01]'
+                      : 'border border-gray-300'
+                  }`}
                   style={{
                     gridColumn: isMobile ? 2 : dayIdx + 2,
                     gridRow: row,
