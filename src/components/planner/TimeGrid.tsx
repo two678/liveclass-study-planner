@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StudyBlock } from '@/types/planner';
 import { usePlannerStore } from '@/store/usePlannerStore';
 import { usePlanner } from '@/hooks/queries/usePlanner';
@@ -10,8 +10,8 @@ import TimeGridBackground from './TimeGridBackground';
 import TimeGridBlocks from './TimeGridBlocks';
 
 export default function TimeGrid() {
-  // Zustand 스토어에서 weekStart 상태를 가져옵니다.
-  const { weekStart } = usePlannerStore();
+  // Zustand 스토어에서 상태를 가져옵니다.
+  const { weekStart, setBlocks } = usePlannerStore();
 
   // 모달 상태 관리
   const [modalState, setModalState] = useState<{
@@ -24,6 +24,12 @@ export default function TimeGrid() {
 
   const { data: plannerData, isLoading } = usePlanner(weekStart);
   const { data: courseData } = useCourses();
+
+  useEffect(() => {
+    if (plannerData?.blocks) {
+      setBlocks(plannerData.blocks);
+    }
+  }, [plannerData?.blocks, setBlocks]);
 
   const blocks = plannerData?.blocks || [];
   const courses = courseData?.courses || [];
