@@ -1,36 +1,103 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LiveClass 학습 플래너
 
-## Getting Started
+30분 단위의 시간 블록으로 한 주의 학습 계획을 시각적으로 설계하고 분석할 수 있는 주간 학습 플래너 웹 애플리케이션입니다.
 
-First, run the development server:
+## 프로젝트 개요
+
+본 프로젝트는 학습자가 주간 학습 스케줄을 직관적인 시간표 형식으로 관리하고, 등록된 학습 통계를 요일별/강의별로 실시간 집계하여 모니터링할 수 있는 도구입니다. **시간 기반 UI 처리**, **시간표 충돌 방지 알고리즘**, **서버 상태(Server State)와 로컬 편집 드래프트(Client State)의 격리 설계**를 통해 안정적인 반응형 레이아웃을 제공합니다.
+
+## 기술 스택
+
+- **Framework**: Next.js 16 (App Router)
+- **Language**: TypeScript 5
+- **Styling**: Tailwind CSS 4
+- **Server State**: TanStack Query v5
+- **Client State**: Zustand v5
+- **Mock API**: MSW v2
+- **Package Manager**: pnpm
+
+## 실행 방법
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+# 1. 의존성 패키지 설치
+pnpm install
+
+# 2. 로컬 개발 서버 구동 (MSW v2 모킹 자동 활성화)
 pnpm dev
-# or
-bun dev
+
+# 3. 프로덕션 빌드 및 실행 검증
+pnpm build
+pnpm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 프로젝트 구조 설명
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+가독성과 유지보수성을 위해 단일 컴포넌트 라인 수(100~120라인 이하)를 철저히 지키며 도메인별 서브 디렉토리 구조로 분할 설계했습니다:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```text
+src/components/planner/
+├── block/
+│   └── StudyBlockItem.tsx          # 타임테이블 상에 배치되는 개별 일정 카드 컴포넌트
+├── grid/
+│   ├── TimeGridBackground.tsx      # 마우스 클릭 이벤트를 감지하는 30분 단위 백그라운드 격자
+│   ├── TimeGridBlocks.tsx          # 등록된 일정 블록 카드를 그리드 좌표 위에 매핑하는 래퍼
+│   ├── TimeGridControlPanel.tsx    # 주차 이동 네비게이션 및 임시 저장 상태 배지 패널
+│   ├── TimeGridHeader.tsx          # 타임라인 요일 및 시간 축 헤더 컴포넌트
+│   └── TimeGridMobileTabs.tsx      # 모바일 뷰 전용 요일 탭 선택 컴포넌트
+├── hooks/
+│   └── useTimeGrid.ts              # TimeGrid의 비즈니스 로직과 React Lifecycle을 분리한 커스텀 훅
+├── modal/
+│   ├── StudyBlockModal.tsx         # 일정 생성/상세편집을 총괄하는 모달 프레임
+│   ├── StudyBlockCreateForm.tsx    # 요일, 시간대(시작/종료), 강의선택, 메모 입력을 관리하는 생성 폼
+│   └── StudyBlockEditForm.tsx      # 개별 스케줄의 상세 수정 및 안전 삭제를 수행하는 편집 폼
+├── summary/
+│   ├── WeeklySummary.tsx           # 주간 통계 및 리포트를 렌더링하는 메인 대시보드
+│   ├── WeeklySummaryCourseWeight.tsx # 과목별 학습 분배 비중 비율 차트
+│   ├── WeeklySummaryDayChart.tsx     # 요일별 누적 학습 시간 가로 막대 통계
+│   ├── WeeklySummaryEmpty.tsx      # 이번 주 학습 블록이 없을 때 노출되는 안내 배너
+│   └── WeeklySummaryTotalTime.tsx   # 총 누적 학습 시간 정보 카드
+└── TimeGrid.tsx                     # 주간 플래너의 메인 페이지 컴포넌트 (97라인)
+```
 
-## Learn More
+## 요구사항 해석 및 가정
 
-To learn more about Next.js, take a look at the following resources:
+1. **시간 충돌의 정의 (경계값 판정)**
+   - **판정 기준**: 09:00~10:00 일정과 10:00~11:00 일정처럼 한 스케줄의 종료 시간과 다른 스케줄의 시작 시간이 정확히 일치하는 인접 경계 상황은 **시간 충돌로 판정하지 않습니다.**
+   - **수식**: 두 스케줄 A, B에 대하여 `(A.startTime < B.endTime) && (A.endTime > B.startTime)` 조건이 참일 때만 겹침 충돌로 판정합니다.
+2. **빈 주차 (블록 0개) 상태 처리**
+   - **가정**: 이번 주 학습 일정이 아예 등록되지 않은 경우, 빈 레이아웃 대신 학습자 가이드를 돕는 친화적인 안내 배너(`WeeklySummaryEmpty.tsx`)를 제공하여 가독성을 높집니다.
+3. **1시간 단위를 벗어나는 엣지 케이스**
+   - **가정**: 사용자가 비정상적인 시간 간격(예: 09:15)을 기입하는 오작동을 차단하기 위해, 모달 입력 폼에서 드롭다운(`Select`) 구성 요소를 30분 간격 고정 목록으로 제한하며 시작 시간 이후의 옵션만 종료 시간 드롭다운에 노출되도록 필터링하여 **시간 역전 오입력을 원천 봉쇄**합니다.
+4. **저장되지 않은 변경 사항의 유실 방지**
+   - **가정**: 임의로 이탈하거나 새로고침할 때 브라우저 `beforeunload` 경고창을 연동하고, 다른 주차로 이동(`moveWeek`)하려 할 시 사용자에게 확인 대화상자(`confirm`)를 띄워 로컬 스케줄 데이터 유실을 능동적으로 보호합니다.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 설계 결정과 이유
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. **서버 상태(Server State) vs 클라이언트 편집 상태(Client State) 분리**
+   - **결정**: 서버 데이터 페칭은 TanStack Query(`usePlanner`)에 일임하고, 사용자의 드래프트 상태는 Zustand 스토어(`usePlannerStore`)로 관리하여 격리했습니다.
+   - **이유**: 데이터 수정 시마다 실시간 서버 통신을 수행하면 네트워크 Latency로 인한 화면 덜컥거림 현상이 발생합니다. 따라서 로컬 Zustand 스토어에서 고속 드래프트 추가/삭제를 수행한 뒤, 최종적으로 상단의 **"저장"** 버튼을 눌러 일괄적으로 동기화(`PUT` 요청 및 `invalidateQueries`)하도록 설계하여 성능과 안정성을 극대화했습니다.
+2. **반응형 30분 단위 CSS Grid 기반 배치**
+   - **결정**: `absolute positioning` 방식 대신 순수 `CSS Grid` 행 좌표 모델을 채택했습니다.
+   - **이유**: absolute 포지셔닝은 줌 배율 변경, 폰트 조절 또는 모바일 디바이스 렌더링 시 격자가 비틀어지고 깨집니다. 30분 간격 시간대를 그리드 행 인덱스로 공식화하여 `gridRowStart`와 `gridRowEnd` 값에 동적 매핑시킴으로써 반응형 정렬을 보장합니다.
+3. **useTimeGrid 커스텀 훅을 통한 컴포넌트 다이어트**
+   - **결정**: `TimeGrid.tsx` 내의 마운트 생명주기, 모바일 리사이즈 감지 이벤트, 모달 토글 로직, 쿼리 응답 동기화 효과를 `useTimeGrid` 커스텀 훅으로 완전 추출했습니다.
+   - **이유**: UI 마크업 구조와 비즈니스 로직을 명확히 대칭 분리함으로써 가독성을 극적으로 끌어올리고 라인 제한(97라인)을 충실히 엄수했습니다.
 
-## Deploy on Vercel
+## 미구현 / 제약사항
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **알려진 제약사항**: 현재 로컬 스토리지에 데이터를 백업하는 오프라인 영속화 레이어는 구현되어 있지 않으며, 최종 저장을 클릭하지 않은 상태에서 브라우저 메모리가 소멸되면 로컬 변경 사항은 리셋됩니다. (이탈 전 `beforeunload` 경고창을 통해 이를 적극 사전 안내합니다.)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## AI 활용 범위
+
+- **AI pair-programming 어시스턴스**:
+  - 단일 컴포넌트의 100라인 이하 분할 설계 구조 고도화 가이드.
+  - 한글 주석 정리 및 코드 정돈 작업 수행.
+- **실제 사용한 MCP 도구 및 검증 (테스트)**:
+  - **사용한 MCP 도구**: `mcp_next-devtools_browser_eval` (Playwright 기반 브라우저 제어)
+  - **실제 검증 내역**:
+    - 브라우저를 실제 기동하여 `http://localhost:3000` 로딩 검증 (Next.js 하이드레이션 오류 및 클라이언트 런타임 깨짐 방지).
+    - 브라우저 콘솔 메시지를 수집하여 MSW v2 서비스 워커가 API 요청(`GET /api/planner`, `GET /api/courses`)을 200 OK로 성공적으로 모킹 인터셉트했는지 로그 확인.
+    - 브라우저 렌더링 스크린샷 획득을 통한 전체 UI 구조 이상 유무 육안 확인.
+    - **30분 단위 인접 경계값 및 시간 충돌 로직 브라우저 검증**:
+      - **인접 시간대 추가 성공 테스트**: 월요일 기존 일정 `09:00 ~ 11:00` 바로 옆인 `11:00 ~ 12:00`에 신규 일정을 등록 시 충돌 없이 정상적으로 스케줄이 추가 및 그리드에 안착함을 확인 (`adjacent_block_added_1779177240774.png`).
+      - **다중 충돌 및 경고 배너 표출 테스트**: 월요일 `10:00 ~ 11:30` (기존 두 일정과 부분 겹침) 범위로 추가 시도 시, 저장 차단 및 상단에 다중 충돌 목록(`• [월요일 09:00~11:00 파이썬 기초]`, `• [월요일 11:00~12:00 리액트]`)이 빨간색 경고 배너로 출력됨을 확인 (`multiple_overlaps_conflict_1779177521003.png`).
