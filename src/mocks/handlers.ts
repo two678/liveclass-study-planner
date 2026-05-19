@@ -41,8 +41,8 @@ let mockPlannerBlocks: StudyBlock[] = [
     id: 'plan003',
     courseId: 'cs002',
     dayOfWeek: 2, // 수
-    startTime: '19:30',
-    endTime: '22:00',
+    startTime: '18:00',
+    endTime: '20:00',
     memo: '리액트 성능 최적화 (useMemo, useCallback) 실전 적용 과제 마무으리🔥',
   },
   {
@@ -57,8 +57,8 @@ let mockPlannerBlocks: StudyBlock[] = [
     id: 'plan005',
     courseId: 'cs005',
     dayOfWeek: 4, // 금
-    startTime: '20:00',
-    endTime: '23:00',
+    startTime: '17:00',
+    endTime: '19:30',
     memo: '모던 자바스크립트 비동기 처리(Promise, async/await) 완벽하게 이해하고 넘어가기',
   },
   {
