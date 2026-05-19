@@ -13,6 +13,9 @@ interface Props {
   onClose: () => void;
 }
 
+/**
+ * 학습 일정 수정을 담당하는 입력 폼 컴포넌트
+ */
 export default function StudyBlockEditForm({ block, onClose }: Props) {
   const { data: coursesData } = useCourses();
   const { updateBlock, deleteBlock } = usePlannerStore();

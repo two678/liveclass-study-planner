@@ -12,6 +12,9 @@ interface Props {
   onClose: () => void;
 }
 
+/**
+ * 학습 일정 추가 및 편집을 위한 모달 오버레이 컴포넌트
+ */
 export default function StudyBlockModal({
   isOpen,
   mode,
