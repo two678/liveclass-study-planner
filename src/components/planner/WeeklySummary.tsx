@@ -55,108 +55,122 @@ export default function WeeklySummary({ blocks, courses }: Props) {
         </span>
       </h3>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* 총 학습 시간 카드 */}
-        <div className="bg-white border border-gray-100 rounded-xl p-5 flex flex-col justify-center items-center shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 left-0 w-full h-1 bg-blue-500" />
-          <span className="text-gray-500 font-medium text-sm mb-2">
-            이번 주 총 학습 시간
-          </span>
-          <div className="flex items-baseline gap-1 text-blue-600">
-            <span className="text-4xl font-extrabold tracking-tight">
-              {totalHours}
-            </span>
-            <span className="text-lg font-bold">시간</span>
-            {totalMins > 0 && (
-              <>
-                <span className="text-4xl font-extrabold tracking-tight ml-2">
-                  {totalMins}
-                </span>
-                <span className="text-lg font-bold">분</span>
-              </>
-            )}
-          </div>
-          <p className="text-xs text-gray-400 mt-3">
-            총 {blocks.length}개의 학습 블록이 배치되어 있습니다.
+      {blocks.length === 0 ? (
+        <div className="bg-blue-50/50 border border-blue-100/70 rounded-xl p-8 text-center shadow-sm">
+          <p className="text-sm font-black text-blue-600 mb-1.5 flex items-center justify-center gap-1">
+            ✨ 아직 이번 주의 학습 일정이 없습니다!
+          </p>
+          <p className="text-xs text-gray-500 font-bold leading-relaxed">
+            시간표 그리드의 원하는 요일과 시간 빈 칸을 마우스나 손가락으로
+            가볍게 클릭하여
+            <br />첫 학습 블록을 등록하고 계획적인 한 주를 힘차게 시작해 보세요!
+            🚀
           </p>
         </div>
-
-        {/* 요일별 학습 시간 */}
-        <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-          <span className="text-gray-700 font-bold text-sm block mb-4">
-            📅 요일별 학습 현황
-          </span>
-          <div className="space-y-3">
-            {dayStats.map(({ day, minutes }) => {
-              const hours = Math.floor(minutes / 60);
-              const mins = minutes % 60;
-              const percent = Math.min((minutes / maxDayMinutes) * 100, 100);
-              const isWeekend = day === '토' || day === '일';
-
-              return (
-                <div key={day} className="flex items-center gap-3">
-                  <span
-                    className={`w-8 text-xs font-bold ${isWeekend ? 'text-blue-500' : 'text-gray-600'}`}
-                  >
-                    {day}
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* 총 학습 시간 카드 */}
+          <div className="bg-white border border-gray-100 rounded-xl p-5 flex flex-col justify-center items-center shadow-sm relative overflow-hidden">
+            <div className="absolute top-0 left-0 w-full h-1 bg-blue-500" />
+            <span className="text-gray-500 font-medium text-sm mb-2">
+              이번 주 총 학습 시간
+            </span>
+            <div className="flex items-baseline gap-1 text-blue-600">
+              <span className="text-4xl font-extrabold tracking-tight">
+                {totalHours}
+              </span>
+              <span className="text-lg font-bold">시간</span>
+              {totalMins > 0 && (
+                <>
+                  <span className="text-4xl font-extrabold tracking-tight ml-2">
+                    {totalMins}
                   </span>
-                  <div className="flex-1 bg-gray-100 h-3 rounded-full overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        isWeekend ? 'bg-blue-400' : 'bg-indigo-500'
-                      }`}
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                  <span className="w-16 text-right text-xs font-bold text-gray-600">
-                    {minutes > 0
-                      ? `${hours}h ${mins > 0 ? `${mins}m` : ''}`
-                      : '-'}
-                  </span>
-                </div>
-              );
-            })}
+                  <span className="text-lg font-bold">분</span>
+                </>
+              )}
+            </div>
+            <p className="text-xs text-gray-400 mt-3">
+              총 {blocks.length}개의 학습 블록이 배치되어 있습니다.
+            </p>
           </div>
-        </div>
 
-        {/* 강의별 배분 */}
-        <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
-          <span className="text-gray-700 font-bold text-sm block mb-4">
-            📚 과목별 학습 비중
-          </span>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[220px] overflow-y-auto pr-1">
-            {courseStats.map((course) => {
-              const hours = Math.floor(course.minutes / 60);
-              const mins = course.minutes % 60;
+          {/* 요일별 학습 시간 */}
+          <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <span className="text-gray-700 font-bold text-sm block mb-4">
+              📅 요일별 학습 현황
+            </span>
+            <div className="space-y-3">
+              {dayStats.map(({ day, minutes }) => {
+                const hours = Math.floor(minutes / 60);
+                const mins = minutes % 60;
+                const percent = Math.min((minutes / maxDayMinutes) * 100, 100);
+                const isWeekend = day === '토' || day === '일';
 
-              return (
-                <div
-                  key={course.id}
-                  className="p-3 border border-gray-100 rounded-lg flex flex-col justify-between"
-                  style={{ borderLeft: `4px solid ${course.color}` }}
-                >
-                  <div className="flex justify-between items-start mb-2">
-                    <span className="text-xs font-bold text-gray-800 truncate max-w-[80px]">
-                      {course.title}
-                    </span>
+                return (
+                  <div key={day} className="flex items-center gap-3">
                     <span
-                      className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full"
-                      style={{ backgroundColor: `${course.color}80` }}
+                      className={`w-8 text-xs font-bold ${isWeekend ? 'text-blue-500' : 'text-gray-600'}`}
                     >
-                      {course.percentage}%
+                      {day}
+                    </span>
+                    <div className="flex-1 bg-gray-100 h-3 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full transition-all duration-500 ${
+                          isWeekend ? 'bg-blue-400' : 'bg-indigo-500'
+                        }`}
+                        style={{ width: `${percent}%` }}
+                      />
+                    </div>
+                    <span className="w-16 text-right text-xs font-bold text-gray-600">
+                      {minutes > 0
+                        ? `${hours}h ${mins > 0 ? `${mins}m` : ''}`
+                        : '-'}
                     </span>
                   </div>
-                  <span className="text-xs font-bold text-gray-500">
-                    {course.minutes > 0
-                      ? `${hours}시간 ${mins > 0 ? `${mins}분` : ''}`
-                      : '0시간'}
-                  </span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 강의별 배분 */}
+          <div className="bg-white border border-gray-100 rounded-xl p-5 shadow-sm">
+            <span className="text-gray-700 font-bold text-sm block mb-4">
+              📚 과목별 학습 비중
+            </span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[220px] overflow-y-auto pr-1">
+              {courseStats.map((course) => {
+                const hours = Math.floor(course.minutes / 60);
+                const mins = course.minutes % 60;
+
+                return (
+                  <div
+                    key={course.id}
+                    className="p-3 border border-gray-100 rounded-lg flex flex-col justify-between"
+                    style={{ borderLeft: `4px solid ${course.color}` }}
+                  >
+                    <div className="flex justify-between items-start mb-2">
+                      <span className="text-xs font-bold text-gray-800 truncate max-w-[80px]">
+                        {course.title}
+                      </span>
+                      <span
+                        className="text-[10px] font-extrabold px-1.5 py-0.5 rounded-full"
+                        style={{ backgroundColor: `${course.color}80` }}
+                      >
+                        {course.percentage}%
+                      </span>
+                    </div>
+                    <span className="text-xs font-bold text-gray-500">
+                      {course.minutes > 0
+                        ? `${hours}시간 ${mins > 0 ? `${mins}분` : ''}`
+                        : '0시간'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
