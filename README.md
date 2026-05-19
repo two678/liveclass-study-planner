@@ -10,7 +10,7 @@
 
 - **Framework**: Next.js 16 (App Router)
 - **Language**: TypeScript 5
-- **Styling**: Tailwind CSS 4 (Vanilla CSS 스타일 토큰 조율)
+- **Styling**: Tailwind CSS 4
 - **Server State**: TanStack Query v5
 - **Client State**: Zustand v5
 - **Mock API**: MSW v2
@@ -90,6 +90,14 @@ src/components/planner/
 ## AI 활용 범위
 
 - **AI pair-programming 어시스턴스**:
-  - 단일 컴포넌트의 100라인 이하 분할 설계 구조 고도화 진행.
-  - Playwright 브라우저 자동화 인스턴스를 기동하여, 30분 인접 시간 경계값 충돌 로직 및 MSW v2 모킹 연동 정상 여부를 브라우저 런타임 환경에서 정밀 모니터링 검증.
-  - 한국어 기반 표준 코멘트 포맷 표준화 적용 및 Git 의미 단위 분할 커밋 반영 조율.
+  - 단일 컴포넌트의 100라인 이하 분할 설계 구조 고도화 가이드.
+  - 한글 주석 정리 및 코드 정돈 작업 수행.
+- **실제 사용한 MCP 도구 및 검증 (테스트)**:
+  - **사용한 MCP 도구**: `mcp_next-devtools_browser_eval` (Playwright 기반 브라우저 제어)
+  - **실제 검증 내역**:
+    - 브라우저를 실제 기동하여 `http://localhost:3000` 로딩 검증 (Next.js 하이드레이션 오류 및 클라이언트 런타임 깨짐 방지).
+    - 브라우저 콘솔 메시지를 수집하여 MSW v2 서비스 워커가 API 요청(`GET /api/planner`, `GET /api/courses`)을 200 OK로 성공적으로 모킹 인터셉트했는지 로그 확인.
+    - 브라우저 렌더링 스크린샷 획득을 통한 전체 UI 구조 이상 유무 육안 확인.
+    - **30분 단위 인접 경계값 및 시간 충돌 로직 브라우저 검증**:
+      - **인접 시간대 추가 성공 테스트**: 월요일 기존 일정 `09:00 ~ 11:00` 바로 옆인 `11:00 ~ 12:00`에 신규 일정을 등록 시 충돌 없이 정상적으로 스케줄이 추가 및 그리드에 안착함을 확인 (`adjacent_block_added_1779177240774.png`).
+      - **다중 충돌 및 경고 배너 표출 테스트**: 월요일 `10:00 ~ 11:30` (기존 두 일정과 부분 겹침) 범위로 추가 시도 시, 저장 차단 및 상단에 다중 충돌 목록(`• [월요일 09:00~11:00 파이썬 기초]`, `• [월요일 11:00~12:00 리액트]`)이 빨간색 경고 배너로 출력됨을 확인 (`multiple_overlaps_conflict_1779177521003.png`).
