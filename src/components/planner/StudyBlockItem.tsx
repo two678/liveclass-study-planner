@@ -1,15 +1,16 @@
 import { StudyBlock, Course } from '@/types/planner';
-
 interface Props {
   block: StudyBlock;
   course?: Course;
+  onClick: () => void;
 }
 
-export default function StudyBlockItem({ block, course }: Props) {
+export default function StudyBlockItem({ block, course, onClick }: Props) {
   return (
     <div
       className="w-full h-full rounded-md border border-black shadow-sm cursor-pointer hover:shadow-md transition-shadow p-1 overflow-hidden flex flex-col"
       style={{ backgroundColor: course?.color || '#BFDBFE' }}
+      onClick={onClick}
     >
       <span className="font-bold text-xs truncate">
         {course?.title || block.courseId}
