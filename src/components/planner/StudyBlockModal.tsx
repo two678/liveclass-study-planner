@@ -28,7 +28,7 @@ export default function StudyBlockModal({
     <div className="fixed inset-0 bg-black/40 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white p-6 rounded-2xl w-full max-w-md shadow-2xl transition-all">
         {conflictError && (
-          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm mb-6 p-3 rounded-r-md">
+          <div className="bg-red-50 border-l-4 border-red-500 text-red-700 text-sm mb-6 p-3 rounded-r-md whitespace-pre-line">
             {conflictError}
           </div>
         )}
@@ -39,7 +39,7 @@ export default function StudyBlockModal({
         {mode === 'create' ? (
           <StudyBlockCreateForm day={day} hour={hour} onClose={onClose} />
         ) : (
-          <StudyBlockEditForm block={block} onClose={onClose} />
+          block && <StudyBlockEditForm block={block} onClose={onClose} />
         )}
       </div>
     </div>

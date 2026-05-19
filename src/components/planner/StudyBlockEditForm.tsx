@@ -4,16 +4,21 @@ import Select from '@/components/common/Select';
 import { useCourses } from '@/hooks/queries/useCourses';
 import { HOURS, DAYS } from '@/constants/planner';
 import FormActions from '@/components/common/FormActions';
+import { usePlannerStore } from '@/store/usePlannerStore';
+
+import { useSavePlanner } from '@/hooks/queries/usePlanner';
 
 interface Props {
   day?: string;
   hour?: string;
-  block?: StudyBlock;
+  block: StudyBlock;
   onClose: () => void;
 }
 
 export default function StudyBlockEditForm({ block, onClose }: Props) {
   const { data: coursesData } = useCourses();
+  const { weekStart, blocks, updateBlock } = usePlannerStore();
+  const { mutate: savePlanner } = useSavePlanner();
   // 1. 상태 초기화: 수정 모드면 block 데이터, 추가 모드면 클릭한 위치(hour) 데이터
   const [startTime, setStartTime] = useState<string>(
     block?.startTime || '08:00'
@@ -37,14 +42,28 @@ export default function StudyBlockEditForm({ block, onClose }: Props) {
     })) || [];
 
   const handleSave = () => {
-    console.log('Edit saved:', {
-      dayOfWeek,
+    if (!dayOfWeek || !startTime || !endTime || !courseId) return;
+
+    const dayIndex = DAYS.findIndex((d) => d === dayOfWeek);
+    const editBlock = {
+      courseId,
+      dayOfWeek: dayIndex,
       startTime,
       endTime,
-      courseId,
       memo,
+    };
+
+    if (!updateBlock(block.id, editBlock, coursesData?.courses)) return;
+
+    const updatedBlocks = blocks.map((b) =>
+      b.id === block.id ? { ...b, ...editBlock } : b
+    );
+
+    savePlanner({
+      weekStart,
+      blocks: updatedBlocks,
     });
-    // TODO: Zustand 스토어에 수정된 블록 업데이트 로직 연동
+
     onClose();
   };
 

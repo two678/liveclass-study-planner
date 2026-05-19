@@ -3,6 +3,9 @@ import Select from '@/components/common/Select';
 import { HOURS, DAYS } from '@/constants/planner';
 import { useState } from 'react';
 import FormActions from '@/components/common/FormActions';
+import { usePlannerStore } from '@/store/usePlannerStore';
+import type { SavePlannerRequest } from '@/types/planner';
+import { useSavePlanner } from '@/hooks/queries/usePlanner';
 
 interface Props {
   day?: string;
@@ -12,6 +15,8 @@ interface Props {
 
 export default function StudyBlockCreateForm({ day, hour, onClose }: Props) {
   const { data: coursesData } = useCourses();
+  const { weekStart, blocks, addBlock } = usePlannerStore();
+  const { mutate: savePlanner } = useSavePlanner();
   const [dayOfWeek, setDayOfWeek] = useState<string>(day || '');
   const [startTime, setStartTime] = useState<string>(hour || '08:00');
   const [endTime, setEndTime] = useState<string>('');
@@ -28,14 +33,24 @@ export default function StudyBlockCreateForm({ day, hour, onClose }: Props) {
     })) || [];
 
   const handleSave = () => {
-    console.log('Save triggered:', {
-      dayOfWeek,
+    if (!dayOfWeek || !startTime || !endTime || !courseId) return;
+
+    const dayIndex = DAYS.findIndex((d) => d === dayOfWeek);
+    const newBlock: SavePlannerRequest['blocks'][number] = {
+      courseId,
+      dayOfWeek: dayIndex,
       startTime,
       endTime,
-      courseId,
       memo,
+    };
+
+    if (!addBlock(newBlock, coursesData?.courses)) return;
+
+    savePlanner({
+      weekStart,
+      blocks: [...blocks, newBlock],
     });
-    // TODO: Zustand 스토어에 새 블록 추가하는 로직 연동
+
     onClose();
   };
 
