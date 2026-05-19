@@ -21,6 +21,32 @@ const mockCourses = [
 ];
 
 const mockPlannerWeeks: Record<string, StudyBlock[]> = {
+  '2026-05-11': [
+    {
+      id: 'plan_prev_001',
+      courseId: 'cs001',
+      dayOfWeek: 0, // 월
+      startTime: '10:00',
+      endTime: '12:00',
+      memo: '파이썬 기초 문법 다지기 복습 스터디 🐍',
+    },
+    {
+      id: 'plan_prev_002',
+      courseId: 'cs002',
+      dayOfWeek: 2, // 수
+      startTime: '14:00',
+      endTime: '16:30',
+      memo: '리액트 컴포넌트 생명주기와 훅 이해하기 실습',
+    },
+    {
+      id: 'plan_prev_003',
+      courseId: 'cs004',
+      dayOfWeek: 4, // 금
+      startTime: '09:00',
+      endTime: '11:30',
+      memo: '기초 정렬 알고리즘 문제 풀이 및 시각화 구현',
+    },
+  ],
   '2026-05-18': [
     {
       id: 'plan001',
@@ -69,6 +95,32 @@ const mockPlannerWeeks: Record<string, StudyBlock[]> = {
       startTime: '13:00',
       endTime: '18:00',
       memo: '주말 빡코딩! 리액트 상태관리 라이브러리(Zustand) 적용해서 메인 페이지 리팩토링 🚀',
+    },
+  ],
+  '2026-05-25': [
+    {
+      id: 'plan_next_001',
+      courseId: 'cs003',
+      dayOfWeek: 1, // 화
+      startTime: '11:00',
+      endTime: '13:00',
+      memo: '타입스크립트 고급 타입 설계 및 에러 다루기',
+    },
+    {
+      id: 'plan_next_002',
+      courseId: 'cs005',
+      dayOfWeek: 3, // 목
+      startTime: '16:00',
+      endTime: '18:30',
+      memo: '자바스크립트 이벤트 루프와 실행 컨텍스트 파헤치기 ⚡',
+    },
+    {
+      id: 'plan_next_003',
+      courseId: 'cs002',
+      dayOfWeek: 5, // 토
+      startTime: '14:00',
+      endTime: '17:00',
+      memo: '리액트 커스텀 훅 설계 및 전역 상태 최적화 기법 스터디',
     },
   ],
 };
