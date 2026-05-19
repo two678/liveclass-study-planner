@@ -186,17 +186,17 @@ export default function TimeGrid() {
         </div>
       </div>
 
-      {/* 모바일 전용 요일 탭 선택기 */}
+      {/* 모바일 전용 프리미엄 세그먼티드 요일 선택 탭 */}
       {isMobile && (
-        <div className="flex justify-between items-center bg-gray-50 border border-gray-200 rounded-2xl p-2 shadow-inner gap-1">
+        <div className="flex justify-between items-center bg-gray-100/70 border border-gray-200/40 rounded-2xl p-1 shadow-inner gap-0.5">
           {DAYS.map((day, idx) => (
             <button
               key={day}
               onClick={() => setSelectedDayIndex(idx)}
-              className={`flex-1 py-2 text-center text-xs font-extrabold rounded-lg transition-all ${
+              className={`flex-1 py-2.5 text-center text-xs rounded-xl transition-all duration-200 ${
                 selectedDayIndex === idx
-                  ? 'bg-blue-600 text-white shadow-sm transform scale-105'
-                  : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                  ? 'bg-white text-blue-600 shadow-[0_2px_6px_rgba(0,0,0,0.05)] border border-gray-200/10 font-black'
+                  : 'text-gray-500 hover:text-gray-800 font-bold bg-transparent'
               }`}
             >
               {day}
@@ -205,10 +205,12 @@ export default function TimeGrid() {
         </div>
       )}
 
-      {/* 메인 요일 및 시간표 그리드 (데스크톱: 8열, 모바일: 2열) */}
+      {/* 메인 요일 및 시간표 그리드 (데스크톱: 8열, 모바일: 비대칭 65px/1fr 열) */}
       <div
-        className={`relative bg-white border-2 border-black rounded-2xl p-4 md:p-6 grid shadow-md ${
-          isMobile ? 'grid-cols-2' : 'grid-cols-8'
+        className={`relative rounded-3xl p-4 md:p-6 grid transition-all ${
+          isMobile
+            ? 'bg-gray-50/50 border border-gray-200 shadow-xl shadow-blue-900/5 grid-cols-[65px_1fr] gap-x-2.5 gap-y-1'
+            : 'bg-white border-2 border-black grid-cols-8 shadow-md'
         }`}
       >
         {/* 1. 상단 요일 헤더 */}
