@@ -15,6 +15,8 @@ import { create } from 'zustand';
  * @property updateBlock: 블록을 수정하는 함수 (충돌 시 false 반환)
  * @property conflictError: 시간 충돌 에러 메시지
  * @property clearError: 에러 메시지를 초기화하는 함수
+ * @property isDirty: 저장되지 않은 로컬 변경사항이 존재하는지 여부
+ * @property setDirty: 변경사항 유무(dirty) 상태를 명시적으로 설정하는 함수
  */
 interface PlannerState {
   weekStart: string;
@@ -33,22 +35,29 @@ interface PlannerState {
   ) => boolean;
   conflictError: string | null;
   clearError: () => void;
+  isDirty: boolean;
+  setDirty: (dirty: boolean) => void;
 }
 
 /**
  * 학습 플래너 상태 관리 스토어
- * - setBlocks: 서버 응답으로 블록 배열 교체
- * - addBlock: 클라이언트 충돌 체크 후 블록 추가
- * - deleteBlock: 블록 삭제
- * - updateBlock: 블록 수정
+ * - setBlocks: 서버 응답으로 블록 배열 교체 및 isDirty 해제
+ * - addBlock: 클라이언트 충돌 체크 후 로컬 스토어 blocks에 신규 블록 추가
+ * - deleteBlock: 로컬 스토어 blocks에서 특정 블록 제거
+ * - updateBlock: 클라이언트 충돌 체크 후 로컬 스토어 blocks의 블록 데이터 수정
  */
 export const usePlannerStore = create<PlannerState>((set, get) => ({
   weekStart: startOfWeek(),
   setWeekStart: (dateStr: string) => set({ weekStart: dateStr }),
   blocks: [],
   conflictError: null,
-  setBlocks: (blocks: StudyBlock[]) => set({ blocks }),
-  // 클라이언트 충돌 체크 — 충돌 시 false 반환, 성공 시 true
+  isDirty: false,
+  setDirty: (dirty: boolean) => set({ isDirty: dirty }),
+
+  // 서버 응답으로 블록 설정 시엔 isDirty를 false로 마킹
+  setBlocks: (blocks: StudyBlock[]) => set({ blocks, isDirty: false }),
+
+  // 클라이언트 충돌 체크 후 로컬 스토어 blocks에 실제로 추가 (성공 시 true)
   addBlock: (
     block: SavePlannerRequest['blocks'][number],
     courses?: Course[]
@@ -76,14 +85,28 @@ export const usePlannerStore = create<PlannerState>((set, get) => ({
       return false;
     }
 
+    // 로컬 ID가 없다면 임시 ID 생성 후 로컬 추가
+    const newBlock: StudyBlock = {
+      ...block,
+      id: block.id || `temp_${Date.now()}`,
+    } as StudyBlock;
+
+    set((state) => ({
+      blocks: [...state.blocks, newBlock],
+      isDirty: true,
+    }));
+
     return true;
   },
-  // 블록 삭제
+
+  // 블록 로컬 삭제
   deleteBlock: (id: string) =>
     set((state) => ({
       blocks: state.blocks.filter((block) => block.id !== id),
+      isDirty: true,
     })),
-  // 블록 수정
+
+  // 블록 로컬 수정
   updateBlock: (
     id: string,
     updates: Partial<StudyBlock>,
@@ -123,9 +146,11 @@ export const usePlannerStore = create<PlannerState>((set, get) => ({
       blocks: state.blocks.map((block) =>
         block.id === id ? updatedBlock : block
       ),
+      isDirty: true,
     }));
 
     return true;
   },
+
   clearError: () => set({ conflictError: null }),
 }));
