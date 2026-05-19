@@ -21,11 +21,11 @@ import { StudyBlock } from '@/types/planner';
  * @returns {boolean} 충돌 발생 시 true, 안전한 경우 false
  */
 
-export const isTimeConflict = (
+export const getConflictingBlocks = (
   newBlock: StudyBlock,
   existingBlocks: StudyBlock[]
-): boolean => {
-  return existingBlocks.some((existing) => {
+): StudyBlock[] => {
+  return existingBlocks.filter((existing) => {
     // 1. 요일이 다르면 충돌 가능성 없음
     if (newBlock.dayOfWeek !== existing.dayOfWeek) return false;
 
@@ -37,4 +37,11 @@ export const isTimeConflict = (
 
     return isOverlapping;
   });
+};
+
+export const isTimeConflict = (
+  newBlock: StudyBlock,
+  existingBlocks: StudyBlock[]
+): boolean => {
+  return getConflictingBlocks(newBlock, existingBlocks).length > 0;
 };
