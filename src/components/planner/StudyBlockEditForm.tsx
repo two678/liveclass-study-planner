@@ -3,10 +3,7 @@ import { StudyBlock } from '@/types/planner';
 import Select from '@/components/common/Select';
 import { useCourses } from '@/hooks/queries/useCourses';
 import { HOURS, DAYS } from '@/constants/planner';
-import FormActions from '@/components/common/FormActions';
 import { usePlannerStore } from '@/store/usePlannerStore';
-
-import { useSavePlanner } from '@/hooks/queries/usePlanner';
 
 interface Props {
   day?: string;
@@ -17,9 +14,8 @@ interface Props {
 
 export default function StudyBlockEditForm({ block, onClose }: Props) {
   const { data: coursesData } = useCourses();
-  const { weekStart, blocks, updateBlock } = usePlannerStore();
-  const { mutate: savePlanner } = useSavePlanner();
-  // 1. 상태 초기화: 수정 모드면 block 데이터, 추가 모드면 클릭한 위치(hour) 데이터
+  const { updateBlock, deleteBlock } = usePlannerStore();
+
   const [startTime, setStartTime] = useState<string>(
     block?.startTime || '08:00'
   );
@@ -31,8 +27,6 @@ export default function StudyBlockEditForm({ block, onClose }: Props) {
   const [memo, setMemo] = useState<string>(block?.memo || '');
 
   const timeOptions = HOURS.slice(HOURS.indexOf(startTime) + 1);
-
-  // 2. 시간 목록 만들기 (예: 30분 단위)
 
   const courseOptions =
     coursesData?.courses.map((c) => ({
@@ -53,17 +47,14 @@ export default function StudyBlockEditForm({ block, onClose }: Props) {
       memo,
     };
 
-    if (!updateBlock(block.id, editBlock, coursesData?.courses)) return;
+    // 로컬 스토어에 업데이트만 하고, 성공하면 모달 닫기
+    if (updateBlock(block.id, editBlock, coursesData?.courses)) {
+      onClose();
+    }
+  };
 
-    const updatedBlocks = blocks.map((b) =>
-      b.id === block.id ? { ...b, ...editBlock } : b
-    );
-
-    savePlanner({
-      weekStart,
-      blocks: updatedBlocks,
-    });
-
+  const handleDelete = () => {
+    deleteBlock(block.id);
     onClose();
   };
 
@@ -81,7 +72,10 @@ export default function StudyBlockEditForm({ block, onClose }: Props) {
       <Select
         value={startTime}
         onChange={setStartTime}
-        options={HOURS.map((time) => ({ value: time, label: time }))}
+        options={HOURS.slice(0, -1).map((time) => ({
+          value: time,
+          label: time,
+        }))}
         placeholder="시작 시간"
         label="StartTime"
       />
@@ -115,7 +109,32 @@ export default function StudyBlockEditForm({ block, onClose }: Props) {
         />
       </div>
 
-      <FormActions onCancel={onClose} onSave={handleSave} />
+      {/* 취소, 저장, 삭제 액션 버튼 영역 */}
+      <div className="pt-4 flex justify-between gap-3 border-t border-gray-100 mt-2">
+        <button
+          type="button"
+          onClick={handleDelete}
+          className="px-5 py-2.5 text-sm font-semibold text-white bg-red-500 rounded-xl hover:bg-red-600 transition-colors shadow-sm"
+        >
+          삭제
+        </button>
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-5 py-2.5 text-sm font-semibold text-gray-700 bg-gray-100 rounded-xl hover:bg-gray-200 transition-colors"
+          >
+            취소
+          </button>
+          <button
+            type="button"
+            onClick={handleSave}
+            className="px-5 py-2.5 text-sm font-semibold text-white bg-blue-600 rounded-xl hover:bg-blue-700 transition-colors shadow-sm"
+          >
+            저장
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

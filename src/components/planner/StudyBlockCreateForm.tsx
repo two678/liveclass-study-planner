@@ -5,7 +5,6 @@ import { useState } from 'react';
 import FormActions from '@/components/common/FormActions';
 import { usePlannerStore } from '@/store/usePlannerStore';
 import type { SavePlannerRequest } from '@/types/planner';
-import { useSavePlanner } from '@/hooks/queries/usePlanner';
 
 interface Props {
   day?: string;
@@ -15,11 +14,14 @@ interface Props {
 
 export default function StudyBlockCreateForm({ day, hour, onClose }: Props) {
   const { data: coursesData } = useCourses();
-  const { weekStart, blocks, addBlock } = usePlannerStore();
-  const { mutate: savePlanner } = useSavePlanner();
+  const { addBlock } = usePlannerStore();
   const [dayOfWeek, setDayOfWeek] = useState<string>(day || '');
-  const [startTime, setStartTime] = useState<string>(hour || '08:00');
-  const [endTime, setEndTime] = useState<string>('');
+
+  const initialStartTime = hour === '20:00' ? '19:30' : hour || '08:00';
+  const initialEndTime = hour === '20:00' ? '20:00' : '';
+
+  const [startTime, setStartTime] = useState<string>(initialStartTime);
+  const [endTime, setEndTime] = useState<string>(initialEndTime);
   const [courseId, setCourseId] = useState<string>('');
   const [memo, setMemo] = useState<string>('');
 
@@ -44,14 +46,10 @@ export default function StudyBlockCreateForm({ day, hour, onClose }: Props) {
       memo,
     };
 
-    if (!addBlock(newBlock, coursesData?.courses)) return;
-
-    savePlanner({
-      weekStart,
-      blocks: [...blocks, newBlock],
-    });
-
-    onClose();
+    // 로컬 스토어에 추가만 하고, 성공하면 모달 닫기
+    if (addBlock(newBlock, coursesData?.courses)) {
+      onClose();
+    }
   };
 
   return (
@@ -68,7 +66,10 @@ export default function StudyBlockCreateForm({ day, hour, onClose }: Props) {
       <Select
         value={startTime}
         onChange={setStartTime}
-        options={HOURS.map((time) => ({ value: time, label: time }))}
+        options={HOURS.slice(0, -1).map((time) => ({
+          value: time,
+          label: time,
+        }))}
         placeholder="시작 시간"
         label="StartTime"
       />
